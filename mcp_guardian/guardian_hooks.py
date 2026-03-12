@@ -637,45 +637,92 @@ def _sanitize_schema(schema: dict, is_root: bool = True) -> dict:
     Recursively sanitize a JSON schema so OpenAI's strict function calling
     accepts it.
 
-    OpenAI strict mode requirements:
-    - Every property MUST have a 'type' key
-    - Every object MUST have 'additionalProperties': false
-    - Every object MUST list all properties in 'required'
-    - No bare 'additionalProperties' without proper schema
-    - No unsupported 'format' values (e.g. 'uri', 'uri-reference')
+    MCP servers can use the full JSON Schema vocabulary, but OpenAI's strict
+    mode only accepts a subset.  This function bridges the gap so that
+    _any_ MCP server schema can be forwarded to the OpenAI API without
+    400-level rejections.
 
-    Common MCP schema issues this fixes:
-    - Properties with no 'type' (union types) → coerce to 'string'
-    - Objects with 'additionalProperties: true' → replace with false
-    - Objects missing 'required' → auto-generate from properties
-    - Bare objects without 'properties' → add empty properties
-    - Unsupported 'format' values → stripped to avoid API rejection
+    OpenAI strict mode rules (as of 2025-06):
+      REQUIRED
+        - Root schema must be type: "object"
+        - Every object MUST have additionalProperties: false
+        - Every object MUST list ALL property keys in "required"
+        - Every property MUST have a "type" (or anyOf/oneOf)
+      STRIPPED (silently rejected or cause 400 errors)
+        - format (all string formats: uri, date-time, email, ipv4, …)
+        - pattern, contentMediaType, contentEncoding
+        - Numeric constraints: minimum, maximum, exclusiveMinimum,
+          exclusiveMaximum, multipleOf
+        - String constraints: minLength, maxLength
+        - Array constraints: minItems, maxItems, uniqueItems,
+          prefixItems, contains, minContains, maxContains
+        - Object constraints: minProperties, maxProperties,
+          patternProperties, dependentRequired, dependentSchemas,
+          propertyNames, unevaluatedProperties
+        - Conditionals: if, then, else, not
+        - References: $ref, $defs, $id, $anchor, $schema, $comment,
+          $vocabulary, $dynamicRef, $dynamicAnchor
+        - Composition helpers: allOf (anyOf/oneOf kept but sanitised)
+        - Annotations: title, examples, readOnly, writeOnly,
+          deprecated, externalDocs
+        - default (OpenAI ignores it and it can confuse the model)
     """
     if not isinstance(schema, dict):
         return schema
 
-    # Formats that OpenAI's strict function calling rejects
-    _UNSUPPORTED_FORMATS = {
-        "uri", "uri-reference", "uri-template", "iri", "iri-reference",
-        "idn-email", "idn-hostname", "json-pointer",
-        "relative-json-pointer", "regex", "ipv4", "ipv6",
+    # ---- keywords OpenAI rejects outright or silently ignores ----------
+    _STRIP_KEYS = {
+        # format — all values rejected, so drop the key entirely
+        "format",
+        # string constraints
+        "minLength", "maxLength", "pattern",
+        "contentMediaType", "contentEncoding",
+        # numeric constraints
+        "minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum",
+        "multipleOf",
+        # array constraints
+        "minItems", "maxItems", "uniqueItems",
+        "prefixItems", "contains", "minContains", "maxContains",
+        # object constraints
+        "minProperties", "maxProperties", "patternProperties",
+        "dependentRequired", "dependentSchemas", "propertyNames",
+        "unevaluatedProperties",
+        # conditionals
+        "if", "then", "else", "not",
+        # references & meta
+        "$ref", "$defs", "$id", "$anchor", "$schema", "$comment",
+        "$vocabulary", "$dynamicRef", "$dynamicAnchor",
+        # composition — allOf flattened below, anyOf/oneOf kept
+        "allOf",
+        # annotations that add noise / aren't used
+        "title", "examples", "readOnly", "writeOnly",
+        "deprecated", "externalDocs",
+        # default values — OpenAI ignores them
+        "default",
+        # additionalProperties — re-added correctly below
+        "additionalProperties",
     }
 
     result = {}
     for key, value in schema.items():
-        if key == "additionalProperties":
-            # Will be re-added below where appropriate
-            continue
-        elif key == "format" and value in _UNSUPPORTED_FORMATS:
-            # Strip unsupported format values that OpenAI rejects
+        if key in _STRIP_KEYS:
             continue
         elif key == "properties" and isinstance(value, dict):
             result[key] = {
                 k: _sanitize_schema(v, is_root=False)
                 for k, v in value.items()
             }
-        elif key == "items" and isinstance(value, dict):
+        elif key in ("items", "additionalItems") and isinstance(value, dict):
+            if key == "additionalItems":
+                continue  # not supported
             result[key] = _sanitize_schema(value, is_root=False)
+        elif key in ("anyOf", "oneOf") and isinstance(value, list):
+            sanitized = [
+                _sanitize_schema(v, is_root=False)
+                if isinstance(v, dict) else v
+                for v in value
+            ]
+            result[key] = sanitized
         elif isinstance(value, dict):
             result[key] = _sanitize_schema(value, is_root=False)
         elif isinstance(value, list):
@@ -687,7 +734,23 @@ def _sanitize_schema(schema: dict, is_root: bool = True) -> dict:
         else:
             result[key] = value
 
-    # Ensure every object type has strict-compatible structure
+    # ---- Flatten allOf if it was present (merge into result) -----------
+    all_of = schema.get("allOf")
+    if isinstance(all_of, list):
+        for sub in all_of:
+            if isinstance(sub, dict):
+                merged = _sanitize_schema(sub, is_root=False)
+                for mk, mv in merged.items():
+                    if mk == "properties" and mk in result:
+                        result[mk].update(mv)
+                    elif mk == "required" and mk in result:
+                        result[mk] = list(
+                            dict.fromkeys(result[mk] + mv)
+                        )
+                    else:
+                        result.setdefault(mk, mv)
+
+    # ---- Ensure every object has strict-compatible structure -----------
     obj_type = result.get("type")
     if obj_type == "object" or "properties" in result:
         result.setdefault("type", "object")
@@ -699,9 +762,13 @@ def _sanitize_schema(schema: dict, is_root: bool = True) -> dict:
     elif is_root:
         result["additionalProperties"] = False
 
-    # Every non-root property schema MUST have a 'type' key.
-    # If missing (e.g. union types, anyOf without type), default to string.
-    if not is_root and "type" not in result and "anyOf" not in result and "oneOf" not in result:
+    # ---- Every non-root schema MUST have a type -----------------------
+    if (
+        not is_root
+        and "type" not in result
+        and "anyOf" not in result
+        and "oneOf" not in result
+    ):
         result["type"] = "string"
 
     return result
