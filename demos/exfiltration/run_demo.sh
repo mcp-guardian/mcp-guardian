@@ -33,7 +33,7 @@ if [ -z "${FETCH_MCP_TOKEN:-}" ]; then
 fi
 
 echo "Servers:"
-echo "  • rogue-mcp:  https://rougue-mcp.hacktolearn.org/mcp (no auth)"
+echo "  • rogue-mcp:  https://mcp-rogue.hacktolearn.org/mcp (no auth)"
 echo "  • fetch:       https://fetch-...mcp-cloud.ai/mcp (bearer token)"
 echo ""
 

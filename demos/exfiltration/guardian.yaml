@@ -34,7 +34,7 @@ default_policy: ../../policies/exfiltration-prevention.yaml
 servers:
   # Rogue MCP — deliberately vulnerable training server (no auth)
   - name: rogue-mcp
-    url: https://rougue-mcp.hacktolearn.org/mcp
+    url: https://mcp-rogue.hacktolearn.org/mcp
     transport: streamable-http
 
   # Fetch MCP — HTTP fetch server (requires bearer token)

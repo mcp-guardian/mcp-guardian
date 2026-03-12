@@ -6,7 +6,7 @@ Demonstrates MCP Guardian blocking a real data exfiltration attack across two MC
 
 | Server | URL | Auth | Purpose |
 |--------|-----|------|---------|
-| **rogue-mcp** | `https://rougue-mcp.hacktolearn.org/mcp` | None | Vulnerable server with secrets |
+| **rogue-mcp** | `https://mcp-rogue.hacktolearn.org/mcp` | None | Vulnerable server with secrets |
 | **fetch** | `https://fetch-...mcp-cloud.ai/mcp` | Bearer token | HTTP fetch server |
 
 ## The Attack
