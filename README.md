@@ -8,10 +8,31 @@ MCP Guardian is not a firewall for MCP servers. It's a guardrail for **agent beh
 
 ```bash
 pip install mcp-guardian-ai
+```
+
+This pulls in all dependencies: `openai-agents`, `pydantic`, `pyyaml`.
+
+Or install everything explicitly:
+
+```bash
+pip install mcp-guardian-ai openai-agents pydantic pyyaml
+```
+
+Set your OpenAI API key (used by the LLM intent evaluator — the fast check tier runs without it):
+
+```bash
 export OPENAI_API_KEY=sk-...
 ```
 
 > **Note:** The PyPI package is `mcp-guardian-ai`. The Python import is `mcp_guardian`.
+
+For development from source:
+
+```bash
+git clone https://github.com/mcp-guardian/mcp-guardian.git
+cd mcp-guardian
+pip install -e ".[dev]"
+```
 
 ## Three Ways to Use It
 
@@ -110,6 +131,24 @@ Every evaluation is logged with verdict, confidence, timing, and reasoning.
 A working demo blocks a data exfiltration attack across two MCP servers. The agent reads a secret (allowed), then an adversarial prompt tries to send it to an attacker URL — blocked at Tier 1 by the transition graph (0ms) and independently at Tier 2 by the LLM constraints.
 
 See [`demos/exfiltration/`](demos/exfiltration/README.md) for details.
+
+## Documentation
+
+The full docs are built with [MkDocs Material](https://squidfunk.github.io/mkdocs-material/). Run them locally with Docker:
+
+```bash
+docker build -f Dockerfile.docs -t mcp-guardian-docs .
+docker run -p 8000:8000 -v $(pwd)/docs:/docs/docs mcp-guardian-docs
+```
+
+Then open [http://localhost:8000](http://localhost:8000). The `-v` mount gives you live reload as you edit.
+
+Or without Docker:
+
+```bash
+pip install mkdocs-material
+mkdocs serve
+```
 
 ## Built On
 
