@@ -4,12 +4,24 @@
 
 MCP Guardian wraps untrusted worker agents with a supervisory layer that validates every tool call against declared intent policies *before execution*. If a tool call doesn't match the policy, it's blocked — the tool never runs.
 
-```
-User → Guardian Orchestrator → Worker Agent → MCP Servers
-              ↓
-       Intent Validator (LLM)
-              ↓
-       Allow / Block / Escalate
+```mermaid
+graph TD
+    U[User / Task] --> A[Worker Agent]
+    A -->|proposes tool call| G[Guardian Guardrail]
+    G -->|fast check| FC{Forbidden?<br/>Not allowed?<br/>Bad transition?}
+    FC -->|yes| BLOCK[Block]
+    FC -->|no| LLM[LLM Intent Evaluator]
+    LLM -->|aligned, high confidence| ALLOW[Allow]
+    LLM -->|misaligned| BLOCK
+    LLM -->|low confidence| ESC[Escalate to User]
+    ALLOW -->|execute| MCP[MCP Server]
+    MCP -->|result| A
+    BLOCK -->|error message| A
+    A -->|final answer| U
+
+    style BLOCK fill:#f44,color:#fff
+    style ALLOW fill:#4a4,color:#fff
+    style ESC fill:#fa4,color:#fff
 ```
 
 ## Why?
