@@ -39,6 +39,9 @@ pip install -e ".[dev]"
 ### Path 1: Pure Python (no files needed)
 
 ```python
+import asyncio
+from agents import Agent, Runner
+from agents.mcp import MCPServerStreamableHttp
 from mcp_guardian import GuardianToolGuardrail, IntentPolicy
 
 policy = IntentPolicy(
@@ -47,10 +50,19 @@ policy = IntentPolicy(
     expected_workflow="Read and list files to answer user questions",
     forbidden_tools=["write_*", "execute_*", "delete_*"],
 )
-
 guardrail = GuardianToolGuardrail(policy=policy)
-tools = await guardrail.wrap_mcp_tools([server])
-agent = Agent(name="Worker", model="gpt-4o", tools=tools)
+
+async def main():
+    async with MCPServerStreamableHttp(
+        name="my-server",
+        params={"url": "https://my-mcp-server.example.com/mcp"},
+    ) as server:
+        tools = await guardrail.wrap_mcp_tools([server])
+        agent = Agent(name="Worker", model="gpt-4o", tools=tools)
+        result = await Runner.run(agent, "List all files")
+        print(result.final_output)
+
+asyncio.run(main())
 ```
 
 ### Path 2: YAML policy file (recommended)
