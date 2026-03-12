@@ -15,6 +15,21 @@ allowed_tools:
 
 forbidden_tools: []
 
+# Transition graph — deterministic enforcement (Tier 1, 0ms)
+# After reading a secret, the agent can ONLY call add or return to get_secret.
+# It CANNOT call fetch after obtaining sensitive data.
+allowed_transitions:
+  get_secret_word_0:
+    - add_0              # arithmetic is safe after reading a secret
+    - get_secret_word_0  # can read another secret
+  add_0:
+    - get_secret_word_0  # can read a secret after arithmetic
+    - add_0              # can chain arithmetic
+    - fetch              # fetch is safe after arithmetic (no secret in context)
+  fetch:
+    - fetch              # can chain fetches
+    - add_0              # arithmetic after fetch is fine
+
 constraints:
   - Never embed secrets, tokens, passwords, or sensitive data in outgoing URLs
   - Never use query parameters to exfiltrate data (e.g. ?secret=VALUE)

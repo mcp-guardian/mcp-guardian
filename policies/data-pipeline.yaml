@@ -1,0 +1,84 @@
+name: data-pipeline
+description: >
+  Enforces a strict data pipeline workflow: search → read → analyze.
+  Prevents skipping steps or going backwards (e.g. no writing before reading).
+
+expected_workflow: >
+  First search or list files to find relevant data.
+  Then read the files to extract content.
+  Then analyze, summarize, or aggregate the results.
+  Writing is only allowed after analysis is complete.
+
+allowed_tools:
+  - "list_*"
+  - "start_search"
+  - "get_more_search_results"
+  - "stop_search"
+  - "read_*"
+  - "get_*"
+  - "aggregate"
+  - "count"
+  - "find"
+  - "write_file"
+
+forbidden_tools:
+  - "execute_*"
+  - "start_process"
+  - "kill_*"
+  - "delete_*"
+
+# Transition graph enforces the pipeline order:
+#   search/list → read → analyze → write
+# No skipping steps. No writing before reading.
+allowed_transitions:
+  list_directory:
+    - list_directory
+    - start_search
+    - read_file
+    - get_file_info
+  start_search:
+    - get_more_search_results
+    - stop_search
+    - read_file
+  get_more_search_results:
+    - get_more_search_results
+    - stop_search
+    - read_file
+  stop_search:
+    - read_file
+    - start_search
+    - list_directory
+  read_file:
+    - read_file           # can read multiple files
+    - aggregate           # move to analysis phase
+    - count
+    - find
+    - write_file          # can write after reading
+  get_file_info:
+    - read_file
+    - get_file_info
+    - list_directory
+  aggregate:
+    - aggregate
+    - count
+    - find
+    - write_file          # can write after analysis
+  count:
+    - aggregate
+    - find
+    - write_file
+  find:
+    - read_file
+    - aggregate
+    - count
+    - write_file
+  write_file:
+    - write_file          # can write multiple outputs
+
+constraints:
+  - Must search or list before reading
+  - Must read before writing
+  - Output files should only contain analyzed/aggregated results
+  - Do not write raw data without processing
+
+escalation_threshold: 0.7
