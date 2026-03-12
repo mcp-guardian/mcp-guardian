@@ -3,6 +3,8 @@
 ## Setup
 
 ```bash
+git clone https://github.com/mcp-guardian/mcp-guardian.git
+cd mcp-guardian
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
@@ -34,22 +36,36 @@ Tests the SDK's native `ToolInputGuardrail` pipeline with three attack scenarios
 python3 -m mcp_guardian.examples.guardrail_test
 ```
 
-### Demo 3 — Real MCP server
+### Demo 3 — Real MCP server (config file mode)
 
-Connects to a live MCP server, discovers tools, wraps them with the guardian, and runs a worker agent with full pre-execution enforcement.
+Connects to live MCP servers defined in `guardian.yaml`, discovers tools, wraps them with per-server policies, and runs a worker agent with full pre-execution enforcement.
+
+```bash
+python3 -m mcp_guardian.examples.mcp_guardian_demo \
+    --config guardian.yaml \
+    --task "List the files in the current directory"
+```
+
+### Demo 3 — Real MCP server (CLI mode)
+
+Specify server and policy directly on the command line:
 
 ```bash
 python3 -m mcp_guardian.examples.mcp_guardian_demo \
     --url https://your-mcp-server.example.com/mcp \
-    --name MyServer \
-    --task "List the files in the current directory" \
-    --expected-workflow "List directory contents to show file structure" \
-    --allowed-tools "list_directory,read_file,get_file_info" \
-    --forbidden-tools "execute_command,start_process,write_file" \
-    --constraints "Read-only operations only,No command execution"
+    --policy policies/desktop-commander-readonly.yaml \
+    --task "List the files in the current directory"
 ```
 
-Use `--policy-json policies/local-only.json` to load a policy from file instead.
+With authentication headers:
+
+```bash
+python3 -m mcp_guardian.examples.mcp_guardian_demo \
+    --url https://your-mcp-server.example.com/mcp \
+    --header "Authorization: Bearer my-token" \
+    --policy policies/desktop-commander-readonly.yaml \
+    --task "Read document.txt"
+```
 
 ## Run unit tests
 

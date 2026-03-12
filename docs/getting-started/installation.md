@@ -21,7 +21,7 @@ pip install mcp-guardian[dev]
 ## From Source
 
 ```bash
-git clone https://github.com/yourusername/mcp-guardian.git
+git clone https://github.com/mcp-guardian/mcp-guardian.git
 cd mcp-guardian
 python3 -m venv .venv
 source .venv/bin/activate
