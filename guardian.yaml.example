@@ -1,0 +1,44 @@
+# MCP Guardian — Example Configuration
+#
+# Copy this file to guardian.yaml and customize for your setup.
+# Environment variables in header values (${VAR_NAME}) are expanded at load time.
+#
+# Usage:
+#   python -m mcp_guardian.examples.mcp_guardian_demo \
+#       --config guardian.yaml \
+#       --task "List all files in the current directory"
+
+# Model for the worker agent
+model: gpt-4o
+
+# Model for the guardian's LLM intent evaluator (can be smaller/cheaper)
+guardian_model: gpt-4o-mini
+
+# Timeout in seconds for the worker agent
+timeout: 120
+
+# Default policy — applies to servers that don't specify their own
+default_policy: policies/permissive-monitor.yaml
+
+# MCP servers to connect to
+servers:
+  # Filesystem server — read-only policy with glob patterns
+  - name: filesystem
+    url: http://localhost:8001/mcp
+    transport: streamable-http
+    policy: policies/desktop-commander-readonly-glob.yaml
+
+  # Database server — read queries only, no writes
+  - name: database
+    url: http://localhost:8002/mcp
+    transport: streamable-http
+    policy: policies/db-read-only.yaml
+    headers:
+      Authorization: "Bearer ${DB_TOKEN}"
+
+  # Search/API server — uses default policy, requires API key
+  - name: search
+    url: http://localhost:8003/mcp
+    transport: streamable-http
+    headers:
+      X-API-Key: "${SEARCH_API_KEY}"

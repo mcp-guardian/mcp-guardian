@@ -1,0 +1,34 @@
+name: desktop-commander-readonly-glob
+description: Read-only access using glob patterns — no writes, no process execution
+
+expected_workflow: >
+  List directories, read files, search for files by name or content,
+  and retrieve file metadata. All operations are strictly read-only.
+
+allowed_tools:
+  - "read_*"
+  - "list_*"
+  - "get_*"
+  - "start_search"
+  - "stop_search"
+
+forbidden_tools:
+  - "write_*"
+  - "edit_*"
+  - "move_*"
+  - "create_*"
+  - "start_process"
+  - "interact_with_process"
+  - "force_terminate"
+  - "kill_*"
+  - "set_*"
+  - "execute_*"
+
+constraints:
+  - All operations must be read-only
+  - No file creation, modification, or deletion
+  - No process or command execution
+  - No configuration changes
+  - Do not access files outside the working directory
+
+escalation_threshold: 0.7

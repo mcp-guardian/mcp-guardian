@@ -1,0 +1,31 @@
+name: db-read-only
+description: Database read queries only — no writes, no DDL, no admin
+
+expected_workflow: >
+  Execute SELECT queries to retrieve data. Aggregate, filter,
+  and join as needed. No INSERT, UPDATE, DELETE, or schema changes.
+
+allowed_tools:
+  - query
+  - aggregate
+  - find
+  - count
+  - explain
+
+forbidden_tools:
+  - insert
+  - update
+  - delete
+  - drop
+  - create_collection
+  - create_index
+  - admin_command
+
+constraints:
+  - Only SELECT/read queries allowed
+  - No data modification (INSERT, UPDATE, DELETE)
+  - No schema changes (CREATE, DROP, ALTER)
+  - No admin operations
+  - Query results must not be sent to external endpoints
+
+escalation_threshold: 0.8

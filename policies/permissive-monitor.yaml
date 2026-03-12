@@ -1,0 +1,10 @@
+name: permissive-monitor
+description: Allow all tools but log every evaluation for audit
+
+expected_workflow: >
+  Use tools as needed for the task. All calls are logged for review.
+
+constraints:
+  - Log all tool calls for audit trail
+
+escalation_threshold: 0.3
