@@ -29,7 +29,7 @@ guardian_model: gpt-4o
 timeout: 120
 
 # Both servers share the exfiltration-prevention policy
-default_policy: policies/exfiltration-prevention.yaml
+default_policy: ../../policies/exfiltration-prevention.yaml
 
 servers:
   # Rogue MCP — deliberately vulnerable training server (no auth)
