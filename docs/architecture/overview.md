@@ -52,17 +52,37 @@ Real MCP servers produce tool schemas that often break OpenAI's strict function 
 
 ## Data Flow
 
-```
-1. Config loaded → servers connected → tools discovered
-2. Each tool wrapped as FunctionTool + GuardianToolGuardrail
-3. Worker Agent created with tools= (not mcp_servers=)
-4. Agent proposes tool call
-5. SDK calls ToolInputGuardrail.run_guardrail()
-6. Guardian runs fast_check → LLM evaluation → verdict
-7. allow → SDK executes tool on MCP server
-8. block → SDK receives rejection, passes error to agent
-9. Agent sees error message, adjusts behavior
-10. All evaluations logged in audit trail
+```mermaid
+sequenceDiagram
+    participant C as Config
+    participant S as MCP Server
+    participant G as Guardian Guardrail
+    participant A as Worker Agent
+    participant L as LLM Evaluator
+    participant AU as Audit Log
+
+    C->>S: Connect & discover tools
+    S-->>G: Wrap tools with guardrails
+    G-->>A: Provide guarded tools
+
+    A->>G: Propose tool call
+    G->>G: fast_check (forbidden? whitelist? transition?)
+    alt Fast-check decides
+        G-->>AU: Log verdict
+        G-->>A: Block (error message)
+    else Needs LLM
+        G->>L: Evaluate intent
+        L-->>G: Verdict + confidence
+        G-->>AU: Log verdict
+        alt Allowed
+            G->>S: Execute tool
+            S-->>A: Return result
+        else Blocked
+            G-->>A: Block (error message)
+        else Low confidence
+            G-->>A: Escalate to user
+        end
+    end
 ```
 
 ## Two Enforcement Modes
