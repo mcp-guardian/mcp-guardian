@@ -171,6 +171,18 @@ pip install mkdocs-material
 mkdocs serve
 ```
 
+## Roadmap
+
+The core engine (policies, fast check, transition graphs, LLM evaluation, audit log) is SDK-agnostic. Currently we ship an adapter for the OpenAI Agents SDK. Future adapters under consideration:
+
+| Runtime | Hook point | Status |
+|---------|-----------|--------|
+| OpenAI Agents SDK | `ToolInputGuardrail` | **Shipped** |
+| Anthropic Claude | `PreToolUse` hook | Planned |
+| Microsoft Agent Framework | `FunctionInvocationFilter` | Planned |
+
+Same YAML policies, same `pip install`, any runtime. Feedback welcome — open an issue if your framework isn't listed.
+
 ## Built On
 
 - [OpenAI Agents SDK](https://github.com/openai/openai-agents-python) — `ToolInputGuardrail`, `AgentHooksBase`
