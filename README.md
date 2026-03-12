@@ -62,12 +62,13 @@ async def main():
         result = await Runner.run(agent, "List all files")
         print(result.final_output)
 
-    # Print violations
+    # Print audit log
     for entry in guardrail.audit_log:
-        icon = "✓" if entry.verdict.value == "allow" else "✗"
-        print(f"  {icon} {entry.tool_name} → {entry.verdict.value.upper()} "
+        verdict = str(entry.verdict)
+        icon = "✓" if verdict == "allow" else "✗"
+        print(f"  {icon} {entry.tool_name} → {verdict.upper()} "
               f"(conf={entry.confidence:.2f}, {entry.method}, {entry.elapsed_ms:.0f}ms)")
-        if entry.verdict.value != "allow":
+        if verdict != "allow":
             print(f"    Reason: {entry.reason}")
 
 asyncio.run(main())

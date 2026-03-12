@@ -83,13 +83,14 @@ async def main():
     # Print audit trail
     print(f"\nGuardian audit trail ({len(guardrail.audit_log)} evaluations):")
     for entry in guardrail.audit_log:
-        icon = {"allow": "✓", "block": "✗", "escalate": "?"}[entry.verdict.value]
+        verdict = str(entry.verdict)
+        icon = {"allow": "✓", "block": "✗", "escalate": "?"}.get(verdict, "?")
         print(
-            f"  {icon} {entry.tool_name} → {entry.verdict.value.upper()} "
+            f"  {icon} {entry.tool_name} → {verdict.upper()} "
             f"(conf={entry.confidence:.2f}, method={entry.method}, "
             f"{entry.elapsed_ms:.0f}ms)"
         )
-        if entry.verdict.value != "allow":
+        if verdict != "allow":
             print(f"    Reason: {entry.reason}")
 
 
