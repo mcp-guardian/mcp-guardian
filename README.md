@@ -2,7 +2,7 @@
 
 **Agent intent enforcement for MCP tool calls — pre-execution security for AI agents.**
 
-MCP Guardian is not a firewall for MCP servers. It's a guardrail for **agent behavior**. It validates every tool call against declared intent policies *before execution*. If the call doesn't match the policy, the MCP server never sees it.
+MCP Guardian is not a firewall for MCP servers. It's a **declarative intent guardrail** for agent behavior. It validates every tool call against declared intent policies *before execution*. If the call doesn't match the policy, the MCP server never sees it.
 
 ## Install
 
