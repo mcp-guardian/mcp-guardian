@@ -179,7 +179,7 @@ class GuardianConfig:
             except ImportError:
                 raise ImportError(
                     "PyYAML is required for YAML config files. "
-                    "Install it with: pip install mcp-guardian[yaml]"
+                    "Install it with: pip install pyyaml"
                 )
             with open(path) as f:
                 data = yaml.safe_load(f)

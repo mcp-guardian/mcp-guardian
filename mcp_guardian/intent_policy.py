@@ -212,7 +212,7 @@ class IntentPolicy:
         except ImportError:
             raise ImportError(
                 "PyYAML is required for YAML policy files. "
-                "Install it with: pip install mcp-guardian[yaml]"
+                "Install it with: pip install pyyaml"
             )
         with open(path) as f:
             return cls.from_dict(yaml.safe_load(f))
@@ -231,7 +231,7 @@ class IntentPolicy:
         except ImportError:
             raise ImportError(
                 "PyYAML is required for YAML policy files. "
-                "Install it with: pip install mcp-guardian[yaml]"
+                "Install it with: pip install pyyaml"
             )
         with open(path, "w") as f:
             yaml.dump(self.to_dict(), f, default_flow_style=False, sort_keys=False)

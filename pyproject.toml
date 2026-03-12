@@ -3,14 +3,14 @@ requires = ["setuptools>=68.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "mcp-guardian"
+name = "mcp-guardian-ai"
 version = "0.1.0"
 description = "Whitelist NLP intent enforcement for MCP agents — pre-execution tool call validation"
 readme = "README.md"
 license = {text = "Apache-2.0"}
 requires-python = ">=3.10"
 authors = [
-    {name = "MCP Firewall"},
+    {name = "MCP Guardian"},
 ]
 keywords = ["mcp", "guardian", "agent", "security", "intent", "guardrail", "openai"]
 classifiers = [
@@ -27,22 +27,19 @@ classifiers = [
 dependencies = [
     "openai-agents>=0.3.0",
     "pydantic>=2.0",
+    "pyyaml>=6.0",
 ]
 
 [project.optional-dependencies]
-yaml = [
-    "pyyaml>=6.0",
-]
 dev = [
     "pytest>=7.0",
     "pytest-asyncio>=0.21",
-    "pyyaml>=6.0",
 ]
 
 [project.urls]
-Homepage = "https://github.com/mcp-firewall/mcp-guardian"
-Repository = "https://github.com/mcp-firewall/mcp-guardian"
-Issues = "https://github.com/mcp-firewall/mcp-guardian/issues"
+Homepage = "https://github.com/mcp-guardian/mcp-guardian"
+Repository = "https://github.com/mcp-guardian/mcp-guardian"
+Issues = "https://github.com/mcp-guardian/mcp-guardian/issues"
 
 [tool.setuptools.packages.find]
 include = ["mcp_guardian*"]
