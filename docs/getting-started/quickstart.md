@@ -1,75 +1,115 @@
 # Quick Start
 
-Run the guardian demo against a real MCP server in under 5 minutes.
+Run the guardian against a real MCP server in under 5 minutes.
 
-## 1. Setup
+## 1. Install
 
 ```bash
-cd mcp-guardian
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev]"
+pip install mcp-guardian-ai
 export OPENAI_API_KEY=sk-...
 ```
 
-## 2. Config File Mode (Recommended)
+!!! note "Package name vs import name"
+    The **PyPI package** is `mcp-guardian-ai` (what you `pip install`).
+    The **Python import** is `mcp_guardian` (what you `import` in code).
 
-Create a `guardian.yaml`:
+## 2. Write a Script
+
+Create `run_guardian.py`:
+
+```python
+import asyncio
+from agents import Agent, Runner
+from agents.mcp import MCPServerStreamableHttp
+from mcp_guardian import GuardianToolGuardrail, IntentPolicy
+
+policy = IntentPolicy(
+    name="read-only",
+    description="Read files only — no writes, no shell",
+    expected_workflow="Read and list files to answer user questions",
+    forbidden_tools=["write_file", "execute_command", "start_process"],
+)
+
+guardrail = GuardianToolGuardrail(policy=policy)
+
+async def main():
+    async with MCPServerStreamableHttp(
+        name="my-server",
+        params={"url": "https://my-mcp-server.example.com/mcp"},
+    ) as server:
+        tools = await guardrail.wrap_mcp_tools([server])
+        agent = Agent(name="Worker", model="gpt-4o", tools=tools)
+        result = await Runner.run(agent, "List all files in the current directory")
+        print(result.final_output)
+
+asyncio.run(main())
+```
+
+Run it:
+
+```bash
+python run_guardian.py
+```
+
+## 3. Use a Policy File
+
+Instead of inline policies, create `policy.yaml`:
 
 ```yaml
-model: gpt-4o
-guardian_model: gpt-4o
-timeout: 120
-default_policy: policies/local-only.yaml
-
-servers:
-  - name: my-server
-    url: https://my-mcp-server.example.com/mcp
-    transport: streamable-http
-    policy: policies/read-only.yaml
+name: read-only
+description: Read-only file access
+expected_workflow: Read and list files to answer user questions
+allowed_tools:
+  - "read_*"
+  - "list_*"
+forbidden_tools:
+  - "write_*"
+  - "execute_*"
+  - "start_*"
+constraints:
+  - Do not access files outside the working directory
+escalation_threshold: 0.7
 ```
 
-Run the demo:
+Load it in your script:
 
-```bash
-python3 -m mcp_guardian.examples.mcp_guardian_demo \
-    --config guardian.yaml \
-    --task "List all files in the current directory"
+```python
+policy = IntentPolicy.from_file("policy.yaml")
+guardrail = GuardianToolGuardrail(policy=policy)
 ```
 
-## 3. CLI Mode (Quick Testing)
+## 4. Use the Built-In Demo CLI
 
-No config file needed — specify everything on the command line:
+The package includes a demo CLI that supports config files and inline policies:
 
 ```bash
-python3 -m mcp_guardian.examples.mcp_guardian_demo \
+# Single server, inline policy
+python -m mcp_guardian.examples.mcp_guardian_demo \
     --url https://my-mcp-server.example.com/mcp \
     --task "List all files" \
     --forbidden-tools "execute_command,write_file,start_process"
-```
 
-With a policy file:
-
-```bash
-python3 -m mcp_guardian.examples.mcp_guardian_demo \
+# Single server, policy file
+python -m mcp_guardian.examples.mcp_guardian_demo \
     --url https://my-mcp-server.example.com/mcp \
-    --policy policies/desktop-commander-readonly.yaml \
+    --policy policy.yaml \
     --task "Read document.txt and summarize it"
-```
 
-With authentication headers:
+# Multi-server config file
+python -m mcp_guardian.examples.mcp_guardian_demo \
+    --config guardian.yaml \
+    --task "List all files in the current directory"
 
-```bash
-python3 -m mcp_guardian.examples.mcp_guardian_demo \
+# With authentication headers
+python -m mcp_guardian.examples.mcp_guardian_demo \
     --url https://my-mcp-server.example.com/mcp \
     --header "Authorization: Bearer my-token" \
-    --header "X-API-Key: my-key" \
     --task "List files"
 ```
 
-## 4. What to Expect
+## 5. What to Expect
 
-The output shows the enforcement in action:
+The output shows enforcement in action:
 
 ```
 ======================================================================
@@ -87,14 +127,20 @@ Guardian audit trail (2 evaluations):
 ⚠ Guardian blocked 1 tool call(s) BEFORE execution!
 ```
 
-The `✓` means the tool was allowed and executed. The `✗` means it was blocked *before* reaching the MCP server. The `method` field tells you which tier made the decision — `fast_check` (0ms, no LLM) or `llm_intent` (LLM evaluation).
+`✓` = allowed and executed. `✗` = blocked *before* reaching the MCP server.
 
-## 5. Standalone Demo (No MCP Server)
+## 6. Standalone Demo (No MCP Server)
 
 To test the guardian logic without connecting to any server:
 
 ```bash
-python3 -m mcp_guardian.examples.doc_lookup_demo
+python -m mcp_guardian.examples.doc_lookup_demo
 ```
 
 This runs three scenarios with simulated tools — a legitimate workflow, a prompt injection attack, and a standalone guardrail test.
+
+## Next Steps
+
+- [Three Lines to Guard](three-lines.md) — integrate the guardian into your existing agent
+- [Policy Reference](../configuration/policies.md) — full policy schema and glob patterns
+- [Exfiltration Demo](../../demos/exfiltration/README.md) — live demo blocking data exfiltration
