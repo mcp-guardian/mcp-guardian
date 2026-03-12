@@ -642,20 +642,32 @@ def _sanitize_schema(schema: dict, is_root: bool = True) -> dict:
     - Every object MUST have 'additionalProperties': false
     - Every object MUST list all properties in 'required'
     - No bare 'additionalProperties' without proper schema
+    - No unsupported 'format' values (e.g. 'uri', 'uri-reference')
 
     Common MCP schema issues this fixes:
     - Properties with no 'type' (union types) → coerce to 'string'
     - Objects with 'additionalProperties: true' → replace with false
     - Objects missing 'required' → auto-generate from properties
     - Bare objects without 'properties' → add empty properties
+    - Unsupported 'format' values → stripped to avoid API rejection
     """
     if not isinstance(schema, dict):
         return schema
+
+    # Formats that OpenAI's strict function calling rejects
+    _UNSUPPORTED_FORMATS = {
+        "uri", "uri-reference", "uri-template", "iri", "iri-reference",
+        "idn-email", "idn-hostname", "json-pointer",
+        "relative-json-pointer", "regex", "ipv4", "ipv6",
+    }
 
     result = {}
     for key, value in schema.items():
         if key == "additionalProperties":
             # Will be re-added below where appropriate
+            continue
+        elif key == "format" and value in _UNSUPPORTED_FORMATS:
+            # Strip unsupported format values that OpenAI rejects
             continue
         elif key == "properties" and isinstance(value, dict):
             result[key] = {
