@@ -1,0 +1,12 @@
+model: gpt-4o
+guardian_model: gpt-4o
+timeout: 120
+default_policy: policies/local-only.yaml
+
+servers:
+  - name: desktop-commander
+    url: https://desktopcommander.hacktolearn.org/mcp
+    transport: streamable-http
+    policy: policies/desktop-commander-readonly.yaml
+    # headers:
+    #   Authorization: "Bearer ${DC_TOKEN}"

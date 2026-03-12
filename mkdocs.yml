@@ -1,0 +1,79 @@
+site_name: MCP Guardian
+site_description: Intent enforcement for MCP tool calls — whitelist-based security for AI agents
+site_url: https://mcp-guardian.hacktolearn.org
+repo_url: https://github.com/yourusername/mcp-guardian
+repo_name: mcp-guardian
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - content.code.copy
+    - content.code.annotate
+    - search.highlight
+  icon:
+    repo: fontawesome/brands/github
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.snippets
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Quick Start: getting-started/quickstart.md
+    - Three Lines to Guard: getting-started/three-lines.md
+  - Configuration:
+    - Guardian Config: configuration/guardian-config.md
+    - Policies: configuration/policies.md
+    - Multi-Server Setup: configuration/multi-server.md
+    - Authentication: configuration/authentication.md
+  - Architecture:
+    - Overview: architecture/overview.md
+    - Enforcement Tiers: architecture/enforcement-tiers.md
+    - SDK Integration: architecture/sdk-integration.md
+  - Examples:
+    - Demo Walkthrough: examples/demo-walkthrough.md
+    - Policy Examples: examples/policy-examples.md
+  - API Reference:
+    - IntentPolicy: api/intent-policy.md
+    - GuardianToolGuardrail: api/guardian-tool-guardrail.md
+    - GuardianConfig: api/guardian-config.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/yourusername/mcp-guardian

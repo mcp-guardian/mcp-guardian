@@ -1,0 +1,38 @@
+name: desktop-commander-readonly
+description: Read-only access to DesktopCommander — no writes, no process execution
+expected_workflow: >
+  List directories, read files, and inspect file metadata.
+  No writing, no moving, no process execution, no config changes.
+
+allowed_tools:
+  - list_directory
+  - read_file
+  - read_multiple_files
+  - get_file_info
+  - list_searches
+  - start_search
+  - get_more_search_results
+  - stop_search
+
+forbidden_tools:
+  - write_file
+  - write_pdf
+  - edit_block
+  - move_file
+  - create_directory
+  - start_process
+  - interact_with_process
+  - read_process_output
+  - force_terminate
+  - kill_process
+  - set_config_value
+  - execute_command
+
+constraints:
+  - Read-only operations only
+  - No file modification or creation
+  - No process execution or management
+  - No configuration changes
+  - Do not access files outside the working directory
+
+escalation_threshold: 0.7

@@ -1,0 +1,36 @@
+name: local-only
+description: Local file and database operations only — no network access
+expected_workflow: >
+  Read local files, extract information, query the database
+  for matching records. All operations must be local.
+
+allowed_tools:
+  - read_file
+  - query_database
+  - list_files
+
+forbidden_tools:
+  - fetch_url
+  - http_post
+  - http_get
+  - send_email
+  - execute_command
+
+allowed_transitions:
+  read_file:
+    - query_database
+    - read_file
+    - list_files
+  query_database:
+    - read_file
+    - query_database
+  list_files:
+    - read_file
+
+constraints:
+  - No internet access — all operations must be local
+  - No sending data externally (email, HTTP, webhooks, etc.)
+  - No executing shell commands
+  - File reads limited to the working directory
+
+escalation_threshold: 0.7
