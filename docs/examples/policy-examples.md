@@ -131,6 +131,49 @@ constraints:
 escalation_threshold: 0.8
 ```
 
+## Read-Only with Glob Patterns
+
+The same read-only policy, but using glob patterns instead of listing every tool. Much easier to maintain when MCP servers add new tools.
+
+```yaml
+name: desktop-commander-readonly-glob
+description: Read-only access using glob patterns
+
+expected_workflow: >
+  List directories, read files, search for files by name or content,
+  and retrieve file metadata. All operations are strictly read-only.
+
+allowed_tools:
+  - "read_*"
+  - "list_*"
+  - "get_*"
+  - "start_search"
+  - "get_more_search_results"
+  - "stop_search"
+
+forbidden_tools:
+  - "write_*"
+  - "edit_*"
+  - "move_*"
+  - "create_*"
+  - "start_process"
+  - "interact_with_process"
+  - "force_terminate"
+  - "kill_*"
+  - "set_*"
+  - "execute_*"
+
+constraints:
+  - All operations must be read-only
+  - No file creation, modification, or deletion
+  - No process or command execution
+
+escalation_threshold: 0.7
+```
+
+!!! tip
+    Glob patterns work well for MCP servers that follow naming conventions like `read_*` for reads, `write_*` for writes, etc. If a tool name doesn't follow the convention, you can always mix globs with exact names.
+
 ## Permissive Default (Logging Only)
 
 Allow everything but log all evaluations. Useful for monitoring before enforcing.

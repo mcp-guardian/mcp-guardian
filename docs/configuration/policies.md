@@ -53,8 +53,8 @@ escalation_threshold: 0.7
 | `name` | string | yes | Policy identifier |
 | `description` | string | yes | Human-readable description |
 | `expected_workflow` | string | yes | Natural language description of what the agent should do (used by LLM evaluator) |
-| `allowed_tools` | list | no | Tool whitelist — if set, only these tools are allowed |
-| `forbidden_tools` | list | no | Tool blacklist — these tools are always blocked |
+| `allowed_tools` | list | no | Tool whitelist — if set, only these tools are allowed. Supports glob patterns (`read_*`, `*`). |
+| `forbidden_tools` | list | no | Tool blacklist — these tools are always blocked. Supports glob patterns (`write_*`, `execute_*`). |
 | `allowed_transitions` | map | no | Valid tool sequences: `tool_a → [tool_b, tool_c]` |
 | `constraints` | list | no | Natural language constraints (used by LLM evaluator) |
 | `escalation_threshold` | float | no | Confidence below this → escalate to user (default: 0.7) |
@@ -94,6 +94,71 @@ You can use either or both:
 
 !!! tip "Recommendation"
     For production, use `forbidden_tools` to explicitly block dangerous tools, and let the LLM evaluator handle the rest via `expected_workflow` and `constraints`. The whitelist approach (`allowed_tools`) is stricter but requires updating the policy every time a new tool is added to the server.
+
+## Wildcard / Glob Patterns
+
+Both `allowed_tools` and `forbidden_tools` support **fnmatch-style glob patterns** in addition to exact tool names. This makes policies much easier to maintain when MCP servers expose many tools with consistent naming conventions.
+
+### Supported Patterns
+
+| Pattern | Meaning | Example |
+|---------|---------|---------|
+| `*` | Match everything | `"*"` allows/blocks all tools |
+| `read_*` | Match prefix | Matches `read_file`, `read_multiple_files`, etc. |
+| `*_process` | Match suffix | Matches `start_process`, `interact_with_process`, etc. |
+| `get_?` | Single character | Matches `get_a`, `get_b`, but not `get_ab` |
+| `tool_[abc]` | Character set | Matches `tool_a`, `tool_b`, `tool_c` |
+
+Plain tool names (no wildcards) still use exact matching — existing policies work unchanged.
+
+### Examples
+
+**Read-only via globs** — much shorter than listing every tool:
+
+```yaml
+allowed_tools:
+  - "read_*"
+  - "list_*"
+  - "get_*"
+  - "search_*"
+
+forbidden_tools:
+  - "write_*"
+  - "execute_*"
+  - "kill_*"
+  - "start_process"
+```
+
+**Allow-all with explicit blocks** — useful when you only want to blacklist dangerous tools:
+
+```yaml
+allowed_tools:
+  - "*"
+
+forbidden_tools:
+  - "write_*"
+  - "execute_*"
+  - "start_process"
+  - "kill_*"
+```
+
+**Mix exact names and patterns:**
+
+```yaml
+allowed_tools:
+  - "read_*"
+  - "list_directory"    # exact name
+  - "get_file_info"     # exact name
+```
+
+### Evaluation Order
+
+Forbidden tools are checked **before** allowed tools. If a tool name matches both a forbidden pattern and an allowed pattern, it is **blocked**. This ensures the blacklist always takes precedence:
+
+```yaml
+allowed_tools: ["*"]            # allow everything ...
+forbidden_tools: ["write_*"]    # ... except writes → write_file is BLOCKED
+```
 
 ## Transition Graph
 

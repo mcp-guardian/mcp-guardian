@@ -33,6 +33,7 @@ import json
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
+from fnmatch import fnmatch
 from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
@@ -110,9 +111,16 @@ class IntentPolicy:
 
         Returns a VerdictResult if the decision is clear-cut (forbidden tool,
         invalid transition). Returns None if LLM evaluation is needed.
+
+        Supports fnmatch-style glob patterns in allowed_tools and
+        forbidden_tools.  For example:
+            allowed_tools: ["read_*", "list_*"]      # glob patterns
+            forbidden_tools: ["execute_*", "write_*"] # glob patterns
+            allowed_tools: ["*"]                      # allow everything
+        Plain names (no wildcards) use exact matching as before.
         """
         # Check forbidden tools
-        if self.forbidden_tools and tool_name in self.forbidden_tools:
+        if self.forbidden_tools and _matches_any(tool_name, self.forbidden_tools):
             return VerdictResult(
                 verdict=PolicyVerdict.BLOCK,
                 tool_name=tool_name,
@@ -125,7 +133,7 @@ class IntentPolicy:
             )
 
         # Check allowed tools (if whitelist is defined)
-        if self.allowed_tools and tool_name not in self.allowed_tools:
+        if self.allowed_tools and not _matches_any(tool_name, self.allowed_tools):
             return VerdictResult(
                 verdict=PolicyVerdict.BLOCK,
                 tool_name=tool_name,
@@ -227,6 +235,25 @@ class IntentPolicy:
             )
         with open(path, "w") as f:
             yaml.dump(self.to_dict(), f, default_flow_style=False, sort_keys=False)
+
+
+def _matches_any(tool_name: str, patterns: list[str]) -> bool:
+    """
+    Check if *tool_name* matches any entry in *patterns*.
+
+    Each pattern is either a plain tool name (exact match) or an
+    fnmatch-style glob (e.g. ``read_*``, ``list_*``, ``*``).
+    Plain names are compared with ``==`` for speed; globs are
+    evaluated with :func:`fnmatch.fnmatch`.
+    """
+    for pat in patterns:
+        if "*" in pat or "?" in pat or "[" in pat:
+            if fnmatch(tool_name, pat):
+                return True
+        else:
+            if tool_name == pat:
+                return True
+    return False
 
 
 def _summarize_args(args: dict, max_len: int = 200) -> str:

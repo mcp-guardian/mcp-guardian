@@ -24,15 +24,21 @@ graph TD
     style ESC fill:#fa4,color:#fff
 ```
 
-## Why?
+## The Problem
 
-MCP servers expose powerful tools — file systems, databases, shell access, APIs. When an AI agent has access to these tools, a prompt injection or a misaligned model can cause real damage. MCP Guardian adds a policy layer between the agent and the tools:
+MCP servers expose powerful tools — file systems, databases, shell access, APIs. When an AI agent has unrestricted access to these tools, three things can go wrong: **prompt injection** (a malicious document hijacks the agent into calling dangerous tools), **model misalignment** (the model makes a judgment error and writes a file or runs a command it shouldn't), and **scope creep** (the agent gradually uses tools outside its mandate). In all three cases, the damage is done before anyone notices — the tool call reaches the MCP server and executes.
 
-- **Whitelist enforcement** — only tools and sequences you've declared are allowed
-- **Three-tier evaluation** — fast deterministic checks first, LLM intent analysis only when needed
-- **Pre-execution blocking** — forbidden calls are stopped before they reach the MCP server
-- **Per-server policies** — different rules for different servers
-- **Full audit trail** — every evaluation is logged with verdict, confidence, and timing
+## The Solution
+
+MCP Guardian validates every tool call **before execution**. If it doesn't match the policy, the call is blocked and the MCP server never sees it. The guardian uses a three-tier pipeline:
+
+1. **Fast deterministic check (0ms)** — forbidden tools, whitelist enforcement, transition graph validation. No LLM, no network call. Catches the majority of bad calls instantly.
+2. **LLM intent evaluation (1-5s)** — for calls that pass the fast check, an LLM evaluator analyzes the tool name, arguments, and prior context against the policy's workflow description and constraints.
+3. **Escalation** — when the LLM is uncertain (confidence below threshold), the call is flagged for human review.
+
+Every evaluation is logged with verdict, confidence, timing, and reasoning — giving you a complete audit trail.
+
+For a detailed explanation, see [How It Works](architecture/how-it-works.md).
 
 ## Quick Example
 
@@ -59,6 +65,7 @@ That's it. Every tool call the agent proposes now passes through the guardian be
 
 - **Core library** — `IntentPolicy`, `GuardianToolGuardrail`, `GuardianAgentHooks`
 - **Multi-server support** — connect N servers, wrap all tools, enforce per-server or global policies
+- **Glob patterns** — `read_*`, `write_*`, `"*"` in allowed/forbidden tool lists for easy policy authoring
 - **Auth passthrough** — bearer tokens and custom headers per server, with `${ENV_VAR}` expansion
 - **Hand-written policies** — YAML or JSON, version-controlled alongside your config
 - **Config file** — single `guardian.yaml` defines servers, policies, auth, and model settings
@@ -70,4 +77,5 @@ That's it. Every tool call the agent proposes now passes through the guardian be
 - [Installation](getting-started/installation.md) — pip install and setup
 - [Quick Start](getting-started/quickstart.md) — run the demo in 5 minutes
 - [Three Lines to Guard](getting-started/three-lines.md) — add the guardian to your existing agent
-- [Architecture](architecture/overview.md) — how it works under the hood
+- [How It Works](architecture/how-it-works.md) — detailed explanation of the guardian
+- [Architecture](architecture/overview.md) — components and data flow

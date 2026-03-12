@@ -62,6 +62,7 @@ nav:
     - Multi-Server Setup: configuration/multi-server.md
     - Authentication: configuration/authentication.md
   - Architecture:
+    - How It Works: architecture/how-it-works.md
     - Overview: architecture/overview.md
     - Enforcement Tiers: architecture/enforcement-tiers.md
     - SDK Integration: architecture/sdk-integration.md
