@@ -5,7 +5,7 @@ default_policy: policies/local-only.yaml
 
 servers:
   - name: desktop-commander
-    url: https://desktopcommander.hacktolearn.org/mcp
+    url: https://your-desktop-commander-server.example.com/mcp
     transport: streamable-http
     policy: policies/desktop-commander-readonly.yaml
     # headers:

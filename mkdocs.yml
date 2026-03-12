@@ -1,6 +1,6 @@
 site_name: MCP Guardian
 site_description: Intent enforcement for MCP tool calls — whitelist-based security for AI agents
-site_url: https://mcp-guardian.hacktolearn.org
+site_url: https://mcp-guardian.github.io/mcp-guardian
 repo_url: https://github.com/mcp-guardian/mcp-guardian
 repo_name: mcp-guardian/mcp-guardian
 
