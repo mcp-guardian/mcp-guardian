@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mcp-guardian-ai"
-version = "0.1.0"
+version = "0.1.1"
 description = "Whitelist NLP intent enforcement for MCP agents — pre-execution tool call validation"
 readme = "README.md"
 license = {text = "Apache-2.0"}
