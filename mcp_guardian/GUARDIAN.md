@@ -126,7 +126,7 @@ The Guardian integrates with the OpenAI Agents SDK through two native mechanisms
 For MCP servers, the Guardian extracts tools from connected servers using `MCPUtil.to_function_tool()`, attaches the guardrail to each tool, and passes them to the Agent as `tools=` instead of `mcp_servers=`. This gives full control over the tool pipeline without modifying MCP servers or the SDK.
 
 ```python
-guardrail = GuardianToolGuardrail(policy=policy, guardian_model="gpt-4o")
+guardrail = GuardianToolGuardrail(policy=policy, guardian_model="gpt-4o-mini")
 guarded_tools = await guardrail.wrap_mcp_tools(servers)
 agent = Agent(tools=guarded_tools, hooks=GuardianAgentHooks(guardrail))
 result = await Runner.run(agent, task)
@@ -363,7 +363,7 @@ A guarded agent adds three lines:
 from agents import Agent, Runner
 from guardian import GuardianToolGuardrail, GuardianAgentHooks
 
-guardrail = GuardianToolGuardrail(policy=policy, guardian_model="gpt-4o")
+guardrail = GuardianToolGuardrail(policy=policy, guardian_model="gpt-4o-mini")
 guarded_tools = await guardrail.wrap_mcp_tools(servers)
 hooks = GuardianAgentHooks(guardrail=guardrail)
 

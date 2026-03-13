@@ -18,7 +18,7 @@ Usage:
     from mcp_guardian.guardian_hooks import GuardianToolGuardrail, GuardianAgentHooks
 
     # Create guardrail and hooks
-    guardrail = GuardianToolGuardrail(policy=policy, guardian_model="gpt-4o")
+    guardrail = GuardianToolGuardrail(policy=policy, guardian_model="gpt-4o-mini")
     hooks = GuardianAgentHooks(guardrail=guardrail)
 
     # Attach to MCP tools
@@ -123,11 +123,15 @@ class GuardianToolGuardrail:
     def __init__(
         self,
         policy: IntentPolicy,
-        guardian_model: str = "gpt-4o",
+        guardian_model: str = "gpt-4o-mini",
+        guardian_base_url: Optional[str] = None,
+        guardian_api_key: Optional[str] = None,
         on_escalate: Any = None,
     ):
         self.policy = policy
         self.guardian_model = guardian_model
+        self.guardian_base_url = guardian_base_url
+        self.guardian_api_key = guardian_api_key
         self.on_escalate = on_escalate
 
         # State
@@ -136,6 +140,27 @@ class GuardianToolGuardrail:
         self._prior_tools: list[str] = []
 
         # Build the guardian LLM evaluator agent
+        # If a custom base_url is provided, use a dedicated OpenAI client
+        # This allows pointing the guardian at Ollama, vLLM, Azure, etc.
+        model_provider = None
+        if guardian_base_url:
+            try:
+                from openai import AsyncOpenAI
+                from agents import OpenAIProvider
+                client = AsyncOpenAI(
+                    base_url=guardian_base_url,
+                    api_key=guardian_api_key or "not-needed",
+                )
+                model_provider = OpenAIProvider(
+                    openai_client=client,
+                )
+            except ImportError:
+                logger.warning(
+                    "Could not import OpenAIProvider — ignoring guardian_base_url. "
+                    "Upgrade openai-agents to use custom base URLs."
+                )
+
+        self._model_provider = model_provider
         self._guardian_agent = Agent(
             name="IntentGuardian",
             model=self.guardian_model,
@@ -205,7 +230,13 @@ Be precise. Explain your reasoning. Cite specific arguments or patterns."""
         # Phase 2: LLM intent evaluation
         eval_prompt = self._build_eval_prompt(tool_name, tool_args)
         try:
-            result = await Runner.run(self._guardian_agent, eval_prompt)
+            run_kwargs = {}
+            if self._model_provider:
+                from agents import RunConfig
+                run_kwargs["run_config"] = RunConfig(
+                    model_provider=self._model_provider,
+                )
+            result = await Runner.run(self._guardian_agent, eval_prompt, **run_kwargs)
             evaluation: GuardianEvaluation = result.final_output
         except Exception as exc:
             logger.error("Guardian LLM evaluation failed: %s", exc)
@@ -544,6 +575,8 @@ async def run_guarded_session(
     policy: IntentPolicy,
     model: str = "gpt-4o",
     guardian_model: str = None,
+    guardian_base_url: str = None,
+    guardian_api_key: str = None,
     timeout: int = 120,
 ) -> GuardedSessionResult:
     """
@@ -558,6 +591,8 @@ async def run_guarded_session(
         policy: IntentPolicy defining expected behavior
         model: Model for the worker agent
         guardian_model: Model for the guardian evaluator (defaults to model)
+        guardian_base_url: Custom base URL for the guardian LLM (Ollama, vLLM, etc.)
+        guardian_api_key: API key for the custom guardian endpoint
         timeout: Timeout in seconds
 
     Returns:
@@ -571,6 +606,8 @@ async def run_guarded_session(
     guardrail = GuardianToolGuardrail(
         policy=policy,
         guardian_model=guardian_model or model,
+        guardian_base_url=guardian_base_url,
+        guardian_api_key=guardian_api_key,
     )
 
     # Wrap MCP tools with guardian

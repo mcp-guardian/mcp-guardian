@@ -136,6 +136,24 @@ The **transition graph** (`allowed_transitions`) is a state machine over tool ca
 
 This makes MCP Guardian a **reasoning guardrail, not just a tool filter**. Anyone can do allow/block lists. The LLM intent evaluation layer supervises the agent's reasoning — catching an allowed tool called with suspicious arguments, or a permitted call that doesn't fit the declared intent. A second LLM evaluating the first LLM's decisions.
 
+The guardian LLM defaults to `gpt-4o-mini` (fast, cheap) but can point at **any OpenAI-compatible endpoint** — Ollama, vLLM, Azure OpenAI, or a fine-tuned model:
+
+```python
+# Use a local Ollama model for the guardian
+guardrail = GuardianToolGuardrail(
+    policy=policy,
+    guardian_model="llama3.2",
+    guardian_base_url="http://localhost:11434/v1",
+)
+```
+
+Or in `guardian.yaml`:
+
+```yaml
+guardian_model: llama3.2
+guardian_base_url: http://localhost:11434/v1
+```
+
 Every evaluation is logged with verdict, confidence, timing, and reasoning.
 
 ## Policy Fields

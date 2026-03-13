@@ -183,6 +183,8 @@ async def run_multi_server_guarded_session(
         guardrail = GuardianToolGuardrail(
             policy=policy,
             guardian_model=config.get_effective_guardian_model(),
+            guardian_base_url=config.guardian_base_url,
+            guardian_api_key=config.guardian_api_key,
         )
         guardrails[srv_cfg.name] = guardrail
 

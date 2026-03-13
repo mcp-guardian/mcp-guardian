@@ -10,6 +10,8 @@ Example guardian.yaml:
 
     model: gpt-4o
     guardian_model: gpt-4o-mini
+    # guardian_base_url: http://localhost:11434/v1  # Ollama
+    # guardian_api_key: not-needed                   # Ollama doesn't need a key
     default_policy: policies/default.yaml
 
     servers:
@@ -105,6 +107,8 @@ class GuardianConfig:
     default_policy: Optional[str] = None  # path to default policy file
     model: str = "gpt-4o"
     guardian_model: Optional[str] = None  # defaults to model
+    guardian_base_url: Optional[str] = None  # custom endpoint (Ollama, vLLM, Azure, etc.)
+    guardian_api_key: Optional[str] = None  # API key for custom endpoint
     timeout: int = 120
 
     # Resolved policies (populated by resolve_policies)
@@ -165,6 +169,8 @@ class GuardianConfig:
             default_policy=data.get("default_policy"),
             model=data.get("model", "gpt-4o"),
             guardian_model=data.get("guardian_model"),
+            guardian_base_url=data.get("guardian_base_url"),
+            guardian_api_key=data.get("guardian_api_key"),
             timeout=data.get("timeout", 120),
         )
 
@@ -208,6 +214,10 @@ class GuardianConfig:
         }
         if self.guardian_model:
             result["guardian_model"] = self.guardian_model
+        if self.guardian_base_url:
+            result["guardian_base_url"] = self.guardian_base_url
+        if self.guardian_api_key:
+            result["guardian_api_key"] = self.guardian_api_key
         if self.default_policy:
             result["default_policy"] = self.default_policy
         return result

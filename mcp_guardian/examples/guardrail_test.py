@@ -92,7 +92,7 @@ async def run_test(task: str, tools: list[FunctionTool], label: str):
     # Create guardian
     guardrail = GuardianToolGuardrail(
         policy=POLICY,
-        guardian_model="gpt-4o",
+        guardian_model="gpt-4o-mini",
     )
 
     # Attach guardrail to tools
