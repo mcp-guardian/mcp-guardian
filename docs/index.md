@@ -102,6 +102,20 @@ agent = Agent(name="Worker", tools=tools)
 
 That's it. Every tool call the agent proposes now passes through all three levels before execution.
 
+## Local / Open-Source LLM Support
+
+The guardian LLM defaults to `gpt-4o-mini` but can point at **any OpenAI-compatible endpoint** — run the entire intent evaluation locally with Ollama, vLLM, or any open-source model. Zero API costs, full data privacy.
+
+```python
+guardrail = GuardianToolGuardrail(
+    policy=policy,
+    guardian_model="llama3.2",
+    guardian_base_url="http://localhost:11434/v1",
+)
+```
+
+See the [Quick Start](getting-started/quickstart.md#using-a-local-llm-ollama-vllm-etc) for Ollama, vLLM, and Azure examples.
+
 ## Features
 
 - **Three-level enforcement** — allowed/forbidden tools → transition graph → LLM intent evaluation, all in one policy

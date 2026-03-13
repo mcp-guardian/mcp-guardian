@@ -50,6 +50,13 @@ policy = IntentPolicy(
 # 2. Create the guardrail
 guardrail = GuardianToolGuardrail(policy=policy)
 
+# Or use a local Ollama model instead of OpenAI:
+# guardrail = GuardianToolGuardrail(
+#     policy=policy,
+#     guardian_model="llama3.2",
+#     guardian_base_url="http://localhost:11434/v1",
+# )
+
 # 3. Connect to MCP server, wrap tools, run agent
 async def main():
     async with MCPServerStreamableHttp(
@@ -240,6 +247,60 @@ Guardian audit trail (3 evaluations):
 ```
 
 `✓` = allowed and executed. `✗` = blocked before reaching the MCP server. `method=fast_check` means it was caught by Tier 1 (deterministic, 0ms). `method=llm_intent` means the LLM evaluated it.
+
+---
+
+## Using a Local LLM (Ollama, vLLM, etc.)
+
+The guardian LLM defaults to `gpt-4o-mini`, but you can point it at **any OpenAI-compatible endpoint**. This means you can run the entire intent evaluation locally with open-source models — zero API costs, full privacy.
+
+### Ollama
+
+```bash
+# Install and start Ollama (https://ollama.com)
+ollama pull llama3.2
+ollama serve
+```
+
+In Python:
+
+```python
+guardrail = GuardianToolGuardrail(
+    policy=policy,
+    guardian_model="llama3.2",
+    guardian_base_url="http://localhost:11434/v1",
+)
+```
+
+Or in `guardian.yaml`:
+
+```yaml
+guardian_model: llama3.2
+guardian_base_url: http://localhost:11434/v1
+```
+
+### vLLM
+
+```python
+guardrail = GuardianToolGuardrail(
+    policy=policy,
+    guardian_model="meta-llama/Llama-3.2-3B-Instruct",
+    guardian_base_url="http://localhost:8000/v1",
+)
+```
+
+### Azure OpenAI
+
+```python
+guardrail = GuardianToolGuardrail(
+    policy=policy,
+    guardian_model="your-deployment-name",
+    guardian_base_url="https://your-resource.openai.azure.com/openai/deployments/your-deployment/v1",
+    guardian_api_key="your-azure-key",
+)
+```
+
+Any model that exposes an OpenAI-compatible `/v1/chat/completions` endpoint works. Smaller models (3B–8B) handle most allow/block decisions well. For nuanced intent evaluation with complex constraints, larger models (70B+) give better results.
 
 ---
 
