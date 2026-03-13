@@ -134,6 +134,8 @@ Three-tier enforcement pipeline on every tool call:
 
 The **transition graph** (`allowed_transitions`) is a state machine over tool calls — similar to [LangGraph](https://github.com/langchain-ai/langgraph), but enforced externally on the agent rather than built into the agent's own execution graph. After tool A, only tools B and C are allowed. Everything else is blocked deterministically at 0ms.
 
+This makes MCP Guardian a **reasoning guardrail, not just a tool filter**. Anyone can do allow/block lists. The LLM intent evaluation layer supervises the agent's reasoning — catching an allowed tool called with suspicious arguments, or a permitted call that doesn't fit the declared intent. A second LLM evaluating the first LLM's decisions.
+
 Every evaluation is logged with verdict, confidence, timing, and reasoning.
 
 ## Policy Fields
